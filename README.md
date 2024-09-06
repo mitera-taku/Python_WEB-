@@ -1,6 +1,7 @@
 # Python_WEB-
 1．株価可視化アプリケーション
-![株価可視化アプリ](https://github.com/user-attachments/assets/f13dbb28-4380-471b-bfe9-c614ae34e663)
+![image](https://github.com/user-attachments/assets/d6301b9a-fb0c-49a1-bc8c-5aa3685d57be)
 
-![株価可視化アプリ　表](https://github.com/user-attachments/assets/91d4c09d-4857-41f0-979e-91c8e8db2c38)
+![image](https://github.com/user-attachments/assets/ea0e390c-b135-409c-b807-2d2164aa5943)
+
 
