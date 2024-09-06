@@ -12,44 +12,48 @@ st.sidebar.write("""
 以下のオプションから表示日数を指定することが出来ます！
 """)
 
-st.sidebar.write('# 表示日数')
+st.sidebar.write('# 日付範囲指定')
 
-days = st.sidebar.slider('日数', 1, 50, 20)
+# 日付範囲を指定するウィジェット
+start_date = st.sidebar.date_input('開始日', datetime.now() - timedelta(days=30))
+end_date = st.sidebar.date_input('終了日', datetime.now())
 
-st.write(f"""
-         ### 過去 **{days}日間** の株価
-""")
+if start_date > end_date:
+    st.error('終了日は開始日より後の日付を指定してください。')
+else:
+    st.write(f"""
+             ### 過去 **{(end_date - start_date).days}日間** の株価
+    """)
 
-@st.cache_data
-def get_data(days, tickers):
-    df = pd.DataFrame()
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days)
-    ticker_to_name = {}
+    @st.cache_data
+    def get_data(start_date, end_date, tickers):
+        df = pd.DataFrame()
+        ticker_to_name = {}
 
-    for ticker, company_name in tickers.items():
-        try:
-            tkr = yf.Ticker(ticker)
-            hist = tkr.history(start=start_date, end=end_date)
-            
-            # indexをdatetime型に変換
-            hist.index = pd.to_datetime(hist.index)
-            
-            # Close価格のデータのみを選択
-            hist = hist[['Close']]
-              # カラム名を会社名に設定
-            hist.columns = [company_name]
-             # インデックスをリセットして、日付を列として追加
-            hist = hist.reset_index() 
-            hist.rename(columns={'Date': 'Date'}, inplace=True)
-            df = pd.merge(df, hist, on='Date', how='outer') if not df.empty else hist
-            
-            ticker_to_name[ticker] = company_name
-        except Exception as e:
-            st.warning(f"{company_name} のデータ取得中にエラーが発生しました: {e}")
-    return df, ticker_to_name
+        for ticker, company_name in tickers.items():
+            try:
+                tkr = yf.Ticker(ticker)
+                hist = tkr.history(start=start_date, end=end_date)
+                
+                # indexをdatetime型に変換し、時間を削除
+                hist.index = pd.to_datetime(hist.index).date  # 時間を削除して日付だけにする
+                
+                # Close価格のデータのみを選択
+                hist = hist[['Close']]
+                
+                # カラム名を会社名に設定
+                hist.columns = [company_name]
+                
+                # インデックスをリセットして、日付を列として追加
+                hist = hist.reset_index() 
+                hist.rename(columns={'index': 'Date'}, inplace=True)
+                df = pd.merge(df, hist, on='Date', how='outer') if not df.empty else hist
+                
+                ticker_to_name[ticker] = company_name
+            except Exception as e:
+                st.warning(f"{company_name} のデータ取得中にエラーが発生しました: {e}")
+        return df, ticker_to_name
 
-try:  
     st.sidebar.write('### 株価の範囲指定')
 
     ymin, ymax = st.sidebar.slider(
@@ -77,7 +81,7 @@ try:
     # 入力されたティッカーシンボルに対応する会社名の辞書を作成
     tickers = {ticker: company_names.get(ticker, ticker) for ticker in tickers_list}
 
-    df, ticker_to_name = get_data(days, tickers)
+    df, ticker_to_name = get_data(start_date, end_date, tickers)
     
     if df.empty:
         st.error('データが取得できませんでした。')
@@ -104,22 +108,10 @@ try:
                 alt.Chart(data)
                 .mark_line(opacity=0.8, clip=True)
                 .encode(
-                    x="Date:T",
+                    x=alt.X("Date:T", title="Date"),  
                     y=alt.Y("Stock Prices(USD):Q", stack=None,
                             scale=alt.Scale(domain=[ymin, ymax])),
                     color='variable:N'
                 )
             )
             st.altair_chart(chart, use_container_width=True)
-except Exception as e:
-    st.error(f"何かエラーが発生してしまったようです: {e}")
-
-
-#         Tiker
-#         'apple': 'AAPL',
-#         'facebook': 'META',
-#         'google': 'GOOGL',
-#         'microsoft': 'MSFT',
-#         'netflix': 'NFLX',
-#         'amazon': 'AMZN',
-#         'TOYOTA': 'TYO'
