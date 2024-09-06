@@ -110,7 +110,7 @@ else:
                 .encode(
                     x=alt.X("Date:T", title="日付"),  
                     y=alt.Y("Stock Prices(USD):Q", stack=None,
-                            scale=alt.Scale(domain=[ymin, ymax]),title="ヤフーファイナンス ドル"),
+                            scale=alt.Scale(domain=[ymin, ymax]),title="株価 ドル"),
                     color='variable:N'
                 )
             )
