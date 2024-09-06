@@ -25,8 +25,9 @@ def get_data(days, tickers):
     df = pd.DataFrame()
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
-    
-    for company, ticker in tickers.items():
+    ticker_to_name = {}
+
+    for ticker, company_name in tickers.items():
         try:
             tkr = yf.Ticker(ticker)
             hist = tkr.history(start=start_date, end=end_date)
@@ -36,43 +37,60 @@ def get_data(days, tickers):
             
             # Close価格のデータのみを選択
             hist = hist[['Close']]
-            hist.columns = [company]
+            hist.columns = [company_name]  # カラム名を会社名に設定
             hist = hist.reset_index()  # インデックスをリセットして、日付を列として追加
             hist.rename(columns={'Date': 'Date'}, inplace=True)
             df = pd.merge(df, hist, on='Date', how='outer') if not df.empty else hist
+            
+            ticker_to_name[ticker] = company_name
         except Exception as e:
-            st.warning(f"{company} のデータ取得中にエラーが発生しました: {e}")
-    return df
+            st.warning(f"{company_name} のデータ取得中にエラーが発生しました: {e}")
+    return df, ticker_to_name
 
 try:  
     st.sidebar.write('### 株価の範囲指定')
 
     ymin, ymax = st.sidebar.slider(
         '範囲を指定してください',
-        0.0, 4000.0, (0.0, 4000.0)
+        0.0, 4000.0, (0.0, 500.0)
     )
 
-    tickers = {
-        'apple': 'AAPL',
-        'facebook': 'META',
-        'google': 'GOOGL',
-        'microsoft': 'MSFT',
-        'netflix': 'NFLX',
-        'amazon': 'AMZN',
-        'TOYOTA': 'TYO'
+    # ユーザーが追加したいティッカーシンボルを入力
+    user_input = st.sidebar.text_input('ティッカーシンボルをカンマで区切って入力してください (例: AAPL, MSFT, GOOGL)', 'AAPL, MSFT, GOOGL')
+    tickers_list = [ticker.strip() for ticker in user_input.split(',')]
+
+    # ティッカーシンボルから会社名を取得する
+    company_names = {
+        'AAPL': 'Apple',
+        'MSFT': 'Microsoft',
+        'GOOGL': 'Google',
+        'META': 'Facebook',
+        'AMZN': 'Amazon',
+        'NFLX': 'Netflix',
+        'TSLA': 'Tesla',
+        'TM': 'TOYOTA'
+        # 必要に応じて他の会社も追加してください
     }
-    df = get_data(days, tickers)
+    
+    # 入力されたティッカーシンボルに対応する会社名の辞書を作成
+    tickers = {ticker: company_names.get(ticker, ticker) for ticker in tickers_list}
+
+    df, ticker_to_name = get_data(days, tickers)
+    
     if df.empty:
         st.error('データが取得できませんでした。')
     else:
+        # Dateを選択肢から除外
+        available_companies = [col for col in df.columns if col != 'Date']
+        
         companies = st.multiselect(
-            '会社を選択してください',
-            list(df.columns),
-            ['google', 'apple', 'facebook', 'amazon']
+            '表示する会社を選択してください',
+            available_companies,
+            list(tickers.values())  # 初期選択はユーザーが入力した会社名
         )
         
         if not companies:
-            st.error('一社は選んでください！！！！')
+            st.error('一社は選んでください！')
         else:
             data = df[['Date'] + companies]
             st.write("### 株価(USD)", data.sort_values('Date'))
@@ -92,3 +110,13 @@ try:
             st.altair_chart(chart, use_container_width=True)
 except Exception as e:
     st.error(f"何かエラーが発生してしまったようです: {e}")
+
+
+#         Tiker
+#         'apple': 'AAPL',
+#         'facebook': 'META',
+#         'google': 'GOOGL',
+#         'microsoft': 'MSFT',
+#         'netflix': 'NFLX',
+#         'amazon': 'AMZN',
+#         'TOYOTA': 'TYO'
