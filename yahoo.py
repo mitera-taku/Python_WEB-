@@ -108,9 +108,9 @@ else:
                 alt.Chart(data)
                 .mark_line(opacity=0.8, clip=True)
                 .encode(
-                    x=alt.X("Date:T", title="Date"),  
+                    x=alt.X("Date:T", title="日付"),  
                     y=alt.Y("Stock Prices(USD):Q", stack=None,
-                            scale=alt.Scale(domain=[ymin, ymax])),
+                            scale=alt.Scale(domain=[ymin, ymax]),title="ヤフーファイナンス ドル"),
                     color='variable:N'
                 )
             )
