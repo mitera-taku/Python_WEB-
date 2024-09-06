@@ -37,8 +37,10 @@ def get_data(days, tickers):
             
             # Close価格のデータのみを選択
             hist = hist[['Close']]
-            hist.columns = [company_name]  # カラム名を会社名に設定
-            hist = hist.reset_index()  # インデックスをリセットして、日付を列として追加
+              # カラム名を会社名に設定
+            hist.columns = [company_name]
+             # インデックスをリセットして、日付を列として追加
+            hist = hist.reset_index() 
             hist.rename(columns={'Date': 'Date'}, inplace=True)
             df = pd.merge(df, hist, on='Date', how='outer') if not df.empty else hist
             
@@ -86,7 +88,8 @@ try:
         companies = st.multiselect(
             '表示する会社を選択してください',
             available_companies,
-            list(tickers.values())  # 初期選択はユーザーが入力した会社名
+            # 初期選択はユーザーが入力した会社名
+            list(tickers.values())  
         )
         
         if not companies:
