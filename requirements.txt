@@ -1,4 +1,4 @@
-streamlit == 0.68.0
+streamlit 
 setuptools
 yfinance
 # 他の依存関係もここに追加
