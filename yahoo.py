@@ -74,7 +74,11 @@ else:
         'AMZN': 'Amazon',
         'NFLX': 'Netflix',
         'TSLA': 'Tesla',
-        'TM': 'TOYOTA'
+        'TM': 'TOYOTA',
+        '7203.T': 'TOYOTA',
+        '3923.T': 'rakus',
+        '4563.T': 'アンジェス',
+        '9983.T': 'ユニクロ'
         # 必要に応じて他の会社も追加してください
     }
     
