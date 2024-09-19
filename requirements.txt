@@ -1,1 +1,3 @@
 streamlit == 0.68.0
+setuptools
+# 他の依存関係もここに追加
