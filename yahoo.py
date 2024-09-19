@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 
 st.title('株価可視アプリ')
 
-st.sidebar.write("""
+st.sidebar.write(""" 
 # 株価
 このアプリは株価可視化ツールです。
-以下のオプションから表示日数を指定することが出来ます！
+以下のオプションから表示日数を指定することが出来ます！ 
 """)
 
 st.sidebar.write('# 日付範囲指定')
@@ -62,7 +62,7 @@ else:
     )
 
     # ユーザーが追加したいティッカーシンボルを入力
-    user_input = st.sidebar.text_input('ティッカーシンボルをカンマで区切って入力してください (例: AAPL, MSFT, GOOGL)', 'AAPL, MSFT, GOOGL')
+    user_input = st.sidebar.text_input('ティッカーシンボルをカンマで区切って入力してください (例: GOOGL, MSFT)', 'GOOGL')
     tickers_list = [ticker.strip() for ticker in user_input.split(',')]
 
     # ティッカーシンボルから会社名を取得する
@@ -81,7 +81,7 @@ else:
         '9983.T': 'ユニクロ'
         # 必要に応じて他の会社も追加してください
     }
-    
+
     # 入力されたティッカーシンボルに対応する会社名の辞書を作成
     tickers = {ticker: company_names.get(ticker, ticker) for ticker in tickers_list}
 
@@ -104,17 +104,31 @@ else:
             st.error('一社は選んでください！')
         else:
             data = df[['Date'] + companies]
-            st.write("### 株価(USD)", data.sort_values('Date'))
-            data = pd.melt(data, id_vars=['Date']).rename(
-                columns={'value': 'Stock Prices(USD)'}
+
+            # 前日の終値との差を計算し、同じデータフレームに追加
+            for company in companies:
+                data[f'{company} Change'] = data[company].diff()
+
+            # 数値が取得できなかった場合に「休日」と表示
+            for company in companies:
+                data[company].fillna(method='ffill', inplace=True)  # 前日の値で埋める
+                data[company].fillna("休日", inplace=True)  # まだNaNの場合は「休日」とする
+
+            st.write("### 株価と変化量", data.sort_values('Date'))
+
+            # グラフ用にデータを整形
+            data_melted = pd.melt(data, id_vars=['Date'], value_vars=companies + [f'{company} Change' for company in companies]).rename(
+                columns={'value': '価格または変化量'}
             )
+
+            # グラフに前日の数値を記載
             chart = (
-                alt.Chart(data)
+                alt.Chart(data_melted)
                 .mark_line(opacity=0.8, clip=True)
                 .encode(
                     x=alt.X("Date:T", title="日付"),  
-                    y=alt.Y("Stock Prices(USD):Q", stack=None,
-                            scale=alt.Scale(domain=[ymin, ymax]),title="株価 ドル"),
+                    y=alt.Y("価格または変化量:Q", stack=None,
+                            scale=alt.Scale(domain=[ymin, ymax]), title="株価/変化量"),
                     color='variable:N'
                 )
             )
